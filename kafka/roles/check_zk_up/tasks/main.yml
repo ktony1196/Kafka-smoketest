@@ -1,0 +1,7 @@
+- name: Verify Zookeeper is running
+  local_action: shell echo srvr | nc "{{inventory_hostname}}" 2181 | grep -P "Mode. (follower|leader)"
+  retries: 3
+  delay: 3
+  register: output
+
+#- debug: var=inventory_hostname

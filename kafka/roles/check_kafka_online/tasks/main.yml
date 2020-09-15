@@ -1,0 +1,3 @@
+- name: Verify Brokers are online
+  shell:
+    cmd: cd /opt/zookeeper; echo " ls /kafka-loc/brokers/ids" | ./bin/zkCli.sh  | grep '\[1, 2, 3\]'

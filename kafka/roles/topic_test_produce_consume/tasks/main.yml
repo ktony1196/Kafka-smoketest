@@ -1,0 +1,53 @@
+- name: delete test topic if exists
+  shell:
+    cmd: cd /opt/kafka/bin; ./kafka-topics.sh --zookeeper "{{ groups['kfk_zks_all'][0] }}:2181/kafka-loc" --delete --topic test
+  ignore_errors: yes
+
+- name: Create a topic in the kafka broker
+  shell:
+    cmd: cd /opt/kafka/bin; ./kafka-topics.sh --zookeeper "{{ groups['kfk_zks_all'][0] }}:2181/kafka-loc" --create --topic test --partitions 3 --replication-factor 2
+
+- name: Remove /tmp/consumer*.data
+  shell:
+    cmd: rm -f /tmp/consumer*.data
+
+- name: Check if created topic exists
+  shell:
+    cmd: cd /opt/kafka/bin; ./kafka-topics.sh --zookeeper "{{ groups['kfk_zks_all'][0] }}:2181/kafka-loc" --list | grep test
+
+- name: Copy test file to /tmp on Kafka Server
+  copy: src=producer.data dest=/tmp/  mode=755
+
+- name: produce test data to topic
+  shell:
+    cmd: cd /opt/kafka/bin; cat /tmp/producer.data | ./kafka-console-producer.sh --broker-list localhost:9092 --topic test
+
+- name: consume test data from topic
+  shell:
+    cmd: cd /opt/kafka/bin; ./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test --from-beginning  >> /tmp/consumer0.data &  pid=$! ; sleep 30; kill $pid ; sort /tmp/consumer0.data >> /tmp/consumer.data
+  register: rc
+- debug:
+    msg: "{{ rc }}"
+
+- name: diff producer file against consumer file
+  shell:
+    cmd: diff /tmp/producer.data /tmp/consumer.data
+  register: rc
+- debug:
+    msg: "{{ rc }}"
+
+- name: delete test topic
+  shell:
+    cmd: cd /opt/kafka/bin; ./kafka-topics.sh --zookeeper "{{ groups['kfk_zks_all'][0] }}:2181/kafka-loc" --delete --topic test
+
+
+
+
+
+
+
+
+
+
+
+
